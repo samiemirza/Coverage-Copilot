@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./loadEnvFile.js";
 import { createServer } from "node:http";
 import { createYoga, createSchema } from "graphql-yoga";
 import { loadEnv } from "@coverage-copilot/shared";
