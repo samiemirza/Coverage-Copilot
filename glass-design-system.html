@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coverage Copilot — Liquid Glass System</title>
+<style>
+  :root {
+    /* ---- Glass recipe (the important part) ---- */
+    --glass-blur: 24px;
+    --glass-saturate: 180%;
+    --radius-pill: 999px;
+    --radius-card: 24px;
+    --radius-control: 16px;
+    --ease: cubic-bezier(.32,.72,0,1);
+
+    /* Accent — calm, trustworthy, glows well on glass. Not default corporate blue. */
+    --accent: 190 90% 55%;          /* cyan-teal */
+    --accent-strong: 190 95% 62%;
+
+    /* Semantic severity (never color-alone; always paired with icon + label) */
+    --sev-low: 150 60% 55%;
+    --sev-med: 40 95% 60%;
+    --sev-high: 4 85% 63%;
+  }
+
+  /* ================= DARK MODE — grey-tinted transparent glass ================= */
+  [data-theme="dark"] {
+    --bg: #0b0d10;
+    --text: #f4f6f8;
+    --text-dim: #a7b0ba;
+
+    --glass-bg: rgba(28, 32, 38, 0.55);
+    --glass-bg-solid: rgba(24, 27, 32, 0.86);   /* for reading content */
+    --glass-border: rgba(255, 255, 255, 0.16);
+    --glass-rim: rgba(255, 255, 255, 0.22);      /* top-edge specular */
+    --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+    --glass-hover: rgba(46, 51, 59, 0.62);
+    --track-off: rgba(255, 255, 255, 0.14);
+  }
+
+  /* ================= LIGHT MODE — white almost-transparent glass ================= */
+  [data-theme="light"] {
+    --bg: #eef2f7;
+    --text: #10151c;
+    --text-dim: #55606d;
+
+    --glass-bg: rgba(255, 255, 255, 0.55);
+    --glass-bg-solid: rgba(255, 255, 255, 0.82);
+    --glass-border: rgba(255, 255, 255, 0.7);
+    --glass-rim: rgba(255, 255, 255, 0.9);
+    --glass-shadow: 0 10px 34px rgba(31, 45, 61, 0.18);
+    --glass-hover: rgba(255, 255, 255, 0.72);
+    --track-off: rgba(20, 30, 45, 0.14);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    transition: color .5s var(--ease);
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* ---- Scene behind the glass (so the blur actually has something to bend) ---- */
+  .scene {
+    position: fixed; inset: 0; z-index: -1;
+    transition: opacity .6s var(--ease);
+  }
+  [data-theme="dark"] .scene {
+    background:
+      radial-gradient(120% 90% at 15% 0%, rgba(34,197,214,.18), transparent 55%),
+      radial-gradient(90% 80% at 90% 20%, rgba(255,168,76,.14), transparent 50%),
+      radial-gradient(100% 100% at 50% 120%, rgba(70,90,160,.30), transparent 60%),
+      repeating-linear-gradient(115deg, rgba(255,255,255,.03) 0 2px, transparent 2px 26px),
+      #0b0d10;
+  }
+  [data-theme="light"] .scene {
+    background:
+      radial-gradient(110% 90% at 12% 0%, rgba(120,200,255,.55), transparent 55%),
+      radial-gradient(90% 80% at 92% 10%, rgba(255,196,168,.5), transparent 50%),
+      radial-gradient(120% 120% at 60% 120%, rgba(190,175,255,.45), transparent 60%),
+      #eef2f7;
+  }
+
+  .wrap { max-width: 940px; margin: 0 auto; padding: 40px 24px 120px; }
+
+  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  h1 { font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
+  .sub { color: var(--text-dim); font-size: 15px; margin-bottom: 40px; }
+  h2 { font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+       color: var(--text-dim); margin: 44px 0 16px; }
+
+  /* ============================ THE GLASS SURFACE ============================ */
+  .glass {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-rim);
+    border-radius: var(--radius-card);
+  }
+
+  /* ---------- Navbar (mirrors reference 1) ---------- */
+  .nav {
+    display: flex; align-items: center; gap: 4px;
+    padding: 10px; border-radius: var(--radius-pill); width: fit-content;
+  }
+  .nav-item {
+    width: 58px; height: 52px; border: none; background: transparent; cursor: pointer;
+    display: grid; place-items: center; border-radius: var(--radius-pill);
+    color: var(--text); transition: background .3s var(--ease), transform .2s var(--ease);
+  }
+  .nav-item:hover { background: var(--glass-hover); }
+  .nav-item:active { transform: scale(.94); }
+  .nav-item.active {
+    background: var(--glass-hover);
+    box-shadow: inset 0 1px 0 var(--glass-rim);
+    width: 96px; border-radius: var(--radius-pill);
+  }
+  .nav-item svg { width: 24px; height: 24px; }
+  .dot { position: relative; }
+  .dot::after {
+    content: ""; position: absolute; top: 12px; right: 14px; width: 7px; height: 7px;
+    border-radius: 50%; background: hsl(var(--sev-high)); box-shadow: 0 0 8px hsl(var(--sev-high)/.8);
+  }
+
+  /* ---------- Cards (mirrors reference 2) ---------- */
+  .cards { display: grid; gap: 14px; }
+  .card { padding: 18px 20px; display: flex; gap: 14px; align-items: flex-start; }
+  .card .ic {
+    width: 40px; height: 40px; border-radius: 12px; flex: none; display: grid; place-items: center;
+    background: var(--glass-hover); box-shadow: inset 0 1px 0 var(--glass-rim); color: var(--text);
+  }
+  .card .body { flex: 1; min-width: 0; }
+  .card .row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .card .ttl { font-weight: 650; font-size: 16px; letter-spacing: -.01em; }
+  .card .time { color: var(--text-dim); font-size: 13px; flex: none; }
+  .card .msg { color: var(--text-dim); font-size: 14.5px; line-height: 1.45; margin-top: 3px; }
+
+  /* Reading surface: MORE opaque, for long answers / policy text (legibility > effect) */
+  .reading {
+    background: var(--glass-bg-solid);
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    backdrop-filter: blur(var(--glass-blur));
+    padding: 20px 22px; line-height: 1.55; font-size: 15px;
+  }
+  .reading .cite {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; font-size: 13px;
+    color: hsl(var(--accent-strong)); font-weight: 600;
+  }
+
+  /* ---------- Buttons ---------- */
+  .btns { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn {
+    font: inherit; font-weight: 600; font-size: 15px; cursor: pointer;
+    padding: 13px 22px; border-radius: var(--radius-control); color: var(--text);
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-rim);
+    transition: transform .18s var(--ease), background .3s var(--ease), filter .2s var(--ease);
+  }
+  .btn:hover { background: var(--glass-hover); }
+  .btn:active { transform: scale(.97); }
+  .btn.primary {
+    background: linear-gradient(180deg, hsl(var(--accent-strong)/.9), hsl(var(--accent)/.75));
+    border-color: hsl(var(--accent-strong)/.6);
+    color: #041318;
+    box-shadow: 0 8px 28px hsl(var(--accent)/.35), inset 0 1px 0 rgba(255,255,255,.5);
+  }
+  .btn.ghost { background: transparent; box-shadow: none; }
+  .btn:focus-visible { outline: 2px solid hsl(var(--accent-strong)); outline-offset: 2px; }
+
+  /* ---------- Toggle switch ---------- */
+  .switches { display: flex; flex-direction: column; gap: 16px; }
+  .swrow { display: flex; align-items: center; justify-content: space-between; max-width: 380px; }
+  .swrow label { font-size: 15px; }
+  .switch { position: relative; width: 54px; height: 32px; flex: none; }
+  .switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .track {
+    position: absolute; inset: 0; border-radius: var(--radius-pill); background: var(--track-off);
+    border: 1px solid var(--glass-border); box-shadow: inset 0 1px 3px rgba(0,0,0,.2);
+    transition: background .35s var(--ease);
+  }
+  .thumb {
+    position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%;
+    background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.9);
+    transition: transform .35s var(--ease);
+  }
+  .switch input:checked ~ .track {
+    background: linear-gradient(180deg, hsl(var(--accent-strong)), hsl(var(--accent)));
+    border-color: hsl(var(--accent-strong)/.7);
+  }
+  .switch input:checked ~ .thumb { transform: translateX(22px); }
+  .switch input:focus-visible ~ .track { outline: 2px solid hsl(var(--accent-strong)); outline-offset: 2px; }
+
+  /* ---------- Segmented control ---------- */
+  .seg { display: inline-flex; padding: 5px; border-radius: var(--radius-pill); gap: 4px; }
+  .seg button {
+    font: inherit; font-weight: 600; font-size: 14px; border: none; cursor: pointer; color: var(--text-dim);
+    padding: 9px 20px; border-radius: var(--radius-pill); background: transparent;
+    transition: color .25s var(--ease), background .25s var(--ease);
+  }
+  .seg button.on {
+    color: var(--text); background: var(--glass-hover); box-shadow: inset 0 1px 0 var(--glass-rim);
+  }
+
+  /* ---------- Input ---------- */
+  .field {
+    display: flex; align-items: center; gap: 10px; max-width: 460px; padding: 4px 4px 4px 18px;
+    border-radius: var(--radius-pill);
+  }
+  .field input {
+    flex: 1; background: transparent; border: none; outline: none; color: var(--text);
+    font: inherit; font-size: 15px; padding: 12px 0;
+  }
+  .field input::placeholder { color: var(--text-dim); }
+  .field .send {
+    width: 42px; height: 42px; flex: none; border: none; cursor: pointer; border-radius: 50%;
+    background: linear-gradient(180deg, hsl(var(--accent-strong)), hsl(var(--accent))); color: #041318;
+    display: grid; place-items: center; transition: transform .18s var(--ease);
+  }
+  .field .send:active { transform: scale(.9); }
+
+  /* ---------- Severity chips (icon + label, never color alone) ---------- */
+  .chips { display: flex; gap: 10px; flex-wrap: wrap; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; font-size: 13.5px; font-weight: 600;
+    border-radius: var(--radius-pill); border: 1px solid var(--glass-border);
+    background: var(--glass-bg); box-shadow: inset 0 1px 0 var(--glass-rim);
+    -webkit-backdrop-filter: blur(var(--glass-blur)); backdrop-filter: blur(var(--glass-blur));
+  }
+  .chip .swatch { width: 9px; height: 9px; border-radius: 50%; }
+  .chip.low .swatch { background: hsl(var(--sev-low)); }
+  .chip.med .swatch { background: hsl(var(--sev-med)); }
+  .chip.high .swatch { background: hsl(var(--sev-high)); }
+
+  /* Mode switch button top-right */
+  .mode { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--text-dim); }
+  .mode .btn { padding: 10px 16px; font-size: 14px; }
+
+  /* Accessibility: honor system preferences */
+  @media (prefers-reduced-transparency: reduce) {
+    .glass, .btn, .chip, .reading { -webkit-backdrop-filter: none; backdrop-filter: none; }
+    [data-theme="dark"] .glass, [data-theme="dark"] .btn { background: rgba(24,27,32,.96); }
+    [data-theme="light"] .glass, [data-theme="light"] .btn { background: rgba(255,255,255,.96); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="scene"></div>
+<div class="wrap">
+
+  <div class="top">
+    <div>
+      <h1>Coverage Copilot</h1>
+    </div>
+    <div class="mode">
+      <span id="modelabel">Dark</span>
+      <button class="btn" onclick="toggleMode()">Toggle mode</button>
+    </div>
+  </div>
+  <p class="sub">Liquid-glass design system — grey-tinted glass in dark, near-white glass in light.</p>
+
+  <h2>Navigation</h2>
+  <nav class="glass nav">
+    <button class="nav-item active" aria-label="Home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+    </button>
+    <button class="nav-item" aria-label="Coverage">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/></svg>
+    </button>
+    <button class="nav-item dot" aria-label="Alerts">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.5 21a2 2 0 0 1-3 0"/></svg>
+    </button>
+    <button class="nav-item" aria-label="Search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    </button>
+  </nav>
+
+  <h2>Risk alerts</h2>
+  <div class="cards">
+    <div class="glass card">
+      <div class="ic">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      </div>
+      <div class="body">
+        <div class="row"><span class="ttl">Coverage gap found</span><span class="time">1h ago</span></div>
+        <p class="msg">You serve alcohol but have no liquor liability coverage. A single incident could be uninsured.</p>
+      </div>
+    </div>
+    <div class="glass card">
+      <div class="ic">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <div class="body">
+        <div class="row"><span class="ttl">Risk review complete</span><span class="time">Yesterday</span></div>
+        <p class="msg">We checked your policies against the baseline for full-service restaurants. 2 gaps, 1 recommendation.</p>
+      </div>
+    </div>
+  </div>
+
+  <h2>Coverage answer (reading surface — more opaque for legibility)</h2>
+  <div class="reading glass" style="border-radius:var(--radius-card);">
+    Yes — your general liability policy covers customer slip-and-fall injuries on your premises, up to
+    your $1M per-occurrence limit. It does not cover injuries to your own staff; those fall under
+    workers' compensation.
+    <br>
+    <span class="cite">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      Source: General Liability Policy, §4.2
+    </span>
+  </div>
+
+  <h2>Buttons</h2>
+  <div class="btns">
+    <button class="btn primary">Start risk review</button>
+    <button class="btn">Upload policy</button>
+    <button class="btn ghost">Cancel</button>
+  </div>
+
+  <h2>Toggles &amp; switches</h2>
+  <div class="switches">
+    <div class="swrow"><label for="s1">Proactive gap alerts</label>
+      <span class="switch"><input id="s1" type="checkbox" checked><span class="track"></span><span class="thumb"></span></span></div>
+    <div class="swrow"><label for="s2">Email me weekly summaries</label>
+      <span class="switch"><input id="s2" type="checkbox"><span class="track"></span><span class="thumb"></span></span></div>
+  </div>
+
+  <h2>Segmented control</h2>
+  <div class="glass seg">
+    <button class="on">Coverage</button>
+    <button>Risk review</button>
+    <button>Policies</button>
+  </div>
+
+  <h2>Ask input</h2>
+  <div class="glass field">
+    <input type="text" placeholder="Ask about your coverage…">
+    <button class="send" aria-label="Send">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+    </button>
+  </div>
+
+  <h2>Severity chips (icon + label, never color alone)</h2>
+  <div class="chips">
+    <span class="chip low"><span class="swatch"></span>Low</span>
+    <span class="chip med"><span class="swatch"></span>Medium</span>
+    <span class="chip high"><span class="swatch"></span>High</span>
+  </div>
+
+</div>
+
+<script>
+  function toggleMode() {
+    const html = document.documentElement;
+    const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    document.getElementById('modelabel').textContent = next === 'dark' ? 'Dark' : 'Light';
+  }
+  // Segmented control demo behavior
+  document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.seg button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+  }));
+  document.querySelectorAll('.nav-item').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+  }));
+</script>
+</body>
+</html>

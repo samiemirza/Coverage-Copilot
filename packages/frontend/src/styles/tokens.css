@@ -1,0 +1,120 @@
+/*
+ * Design tokens ported verbatim from glass-design-system.html (the source of
+ * truth per CLAUDE.md §2 / DESIGN.md). Every component built in later
+ * milestones should read colors/radii/blur from these variables — no
+ * hardcoded hex values, per DESIGN.md §2.
+ */
+
+:root {
+  --glass-blur: 24px;
+  --glass-saturate: 180%;
+  --radius-pill: 999px;
+  --radius-card: 24px;
+  --radius-control: 16px;
+  --ease: cubic-bezier(.32, .72, 0, 1);
+
+  --accent: 190 90% 55%;
+  --accent-strong: 190 95% 62%;
+
+  --sev-low: 150 60% 55%;
+  --sev-med: 40 95% 60%;
+  --sev-high: 4 85% 63%;
+}
+
+[data-theme="dark"] {
+  --bg: #0b0d10;
+  --text: #f4f6f8;
+  --text-dim: #a7b0ba;
+
+  --glass-bg: rgba(28, 32, 38, 0.55);
+  --glass-bg-solid: rgba(24, 27, 32, 0.86);
+  --glass-border: rgba(255, 255, 255, 0.16);
+  --glass-rim: rgba(255, 255, 255, 0.22);
+  --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --glass-hover: rgba(46, 51, 59, 0.62);
+  --track-off: rgba(255, 255, 255, 0.14);
+}
+
+[data-theme="light"] {
+  --bg: #eef2f7;
+  --text: #10151c;
+  --text-dim: #55606d;
+
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-bg-solid: rgba(255, 255, 255, 0.82);
+  --glass-border: rgba(255, 255, 255, 0.7);
+  --glass-rim: rgba(255, 255, 255, 0.9);
+  --glass-shadow: 0 10px 34px rgba(31, 45, 61, 0.18);
+  --glass-hover: rgba(255, 255, 255, 0.72);
+  --track-off: rgba(20, 30, 45, 0.14);
+}
+
+.scene {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  transition: opacity .6s var(--ease);
+}
+[data-theme="dark"] .scene {
+  background:
+    radial-gradient(120% 90% at 15% 0%, rgba(34, 197, 214, .18), transparent 55%),
+    radial-gradient(90% 80% at 90% 20%, rgba(255, 168, 76, .14), transparent 50%),
+    radial-gradient(100% 100% at 50% 120%, rgba(70, 90, 160, .30), transparent 60%),
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, .03) 0 2px, transparent 2px 26px),
+    #0b0d10;
+}
+[data-theme="light"] .scene {
+  background:
+    radial-gradient(110% 90% at 12% 0%, rgba(120, 200, 255, .55), transparent 55%),
+    radial-gradient(90% 80% at 92% 10%, rgba(255, 196, 168, .5), transparent 50%),
+    radial-gradient(120% 120% at 60% 120%, rgba(190, 175, 255, .45), transparent 60%),
+    #eef2f7;
+}
+
+/* Chrome glass (DESIGN.md §1) — navbar, cards, buttons, short text. */
+.glass {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-rim);
+  border-radius: var(--radius-card);
+}
+
+/* Reading glass (DESIGN.md §1) — more opaque, for long-form content. */
+.reading {
+  background: var(--glass-bg-solid);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+}
+
+.btn {
+  font: inherit;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 13px 22px;
+  border-radius: var(--radius-control);
+  color: var(--text);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-rim);
+  transition: transform .18s var(--ease), background .3s var(--ease);
+}
+.btn:hover { background: var(--glass-hover); }
+.btn:active { transform: scale(.97); }
+.btn:focus-visible { outline: 2px solid hsl(var(--accent-strong)); outline-offset: 2px; }
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass, .btn, .reading {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  [data-theme="dark"] .glass, [data-theme="dark"] .btn { background: rgba(24, 27, 32, .96); }
+  [data-theme="light"] .glass, [data-theme="light"] .btn { background: rgba(255, 255, 255, .96); }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
