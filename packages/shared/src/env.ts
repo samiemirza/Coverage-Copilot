@@ -7,11 +7,15 @@ import { z } from "zod";
  */
 export const envSchema = z.object({
   DATABASE_URL: z.string().url(),
-  ANTHROPIC_API_KEY: z.string().min(1),
-  // Used only by the ingestion pipeline (chunk embedding) for now. See
-  // Milestone 2 notes: OpenAI text-embedding-3-small, 1536 dims, matches the
-  // policy_chunks.embedding column created in Milestone 1.
+  // OpenAI is the single LLM provider for this build: embeddings (Milestone 2,
+  // text-embedding-3-small) AND coverage-answer generation (Milestone 3, via
+  // the Vercel AI SDK's OpenAI provider). NB: this deviates from build-spec §8,
+  // which specified Claude — done at the user's request.
   OPENAI_API_KEY: z.string().min(1),
+  // Optional and currently unused: the build spec targeted Claude for
+  // generation. Kept so switching the generation provider back to Anthropic is
+  // a one-line change, not a schema change.
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
   BACKEND_PORT: z.coerce.number().int().positive().default(4000),
   CORS_ORIGIN: z.string().min(1).default("http://localhost:5173"),
 });

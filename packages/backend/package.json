@@ -4,9 +4,13 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@ai-sdk/openai": "^4.0.8",
     "@coverage-copilot/shared": "*",
+    "@types/graphql-depth-limit": "^1.1.6",
+    "ai": "^7.0.17",
     "dotenv": "^16.4.5",
     "graphql": "^16.9.0",
+    "graphql-depth-limit": "^1.1.0",
     "graphql-yoga": "^5.7.0",
     "openai": "^4.60.0",
     "pdfjs-dist": "^4.6.82",
