@@ -4,19 +4,26 @@ import { createYoga, createSchema } from "graphql-yoga";
 import { loadEnv } from "@coverage-copilot/shared";
 import { createPool } from "./db.js";
 import { typeDefs, resolvers, type GraphQLContext } from "./schema.js";
+import { createExtractor } from "./ingest/extractors/index.js";
 
 const env = loadEnv();
 const pool = createPool(env);
+const extractor = createExtractor();
 
 // Introspection stays on in dev for tooling; per Security §4.6 this must be
 // disabled in production, alongside query depth/complexity limits. Deferred
-// to the milestone where real mutations (askCoverageQuestion, startRiskReview)
-// land, since a hello-world schema has nothing worth abusing yet.
+// to the milestone where the read-side mutations (askCoverageQuestion,
+// startRiskReview) land and the abuse surface actually appears.
 const yoga = createYoga<object, GraphQLContext>({
   schema: createSchema({ typeDefs, resolvers }),
-  context: (): GraphQLContext => ({ pool }),
+  context: (): GraphQLContext => ({ pool, env, extractor }),
   cors: { origin: env.CORS_ORIGIN, credentials: true },
   graphiql: true,
+  // File uploads (multipart) are enabled by default. Upload size is enforced
+  // in validatePdfUpload after buffering. Production would ALSO cap the raw
+  // request body at the reverse proxy / load balancer (e.g. an ALB or nginx
+  // client_max_body_size) so oversized uploads are rejected before they reach
+  // Node at all — defense in depth.
 });
 
 const server = createServer(yoga);
